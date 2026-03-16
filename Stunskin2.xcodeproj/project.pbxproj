@@ -6,20 +6,94 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		9FE85FCD2F5A70A500D0CE3B /* StunskinHelper in CopyFiles */ = {isa = PBXBuildFile; fileRef = 9FE85FB62F5A6DE800D0CE3B /* StunskinHelper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9FE85FB42F5A6DE800D0CE3B /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		9FE85FC62F5A702300D0CE3B /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Contents/Library/LaunchDaemons;
+			dstSubfolderSpec = 1;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE85FC72F5A703100D0CE3B /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Contents/Helpers;
+			dstSubfolderSpec = 1;
+			files = (
+				9FE85FCD2F5A70A500D0CE3B /* StunskinHelper in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
-		9FDA2B882F59D144001C8B57 /* Stunskin2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stunskin2.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9FE85F972F5A6CBC00D0CE3B /* Stunskin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stunskin.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9FE85FB62F5A6DE800D0CE3B /* StunskinHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StunskinHelper; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9F86417D2F5F000F00FB73FD /* Exceptions for "Stunskin" folder in "Stunskin" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9FE85F962F5A6CBC00D0CE3B /* Stunskin */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		9FE85FD02F5A70F900D0CE3B /* Exceptions for "StunskinHelper" folder in "Copy Files" phase from "Stunskin" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 9FE85FC62F5A702300D0CE3B /* CopyFiles */;
+			membershipExceptions = (
+				com.Thrill32.Stunskin.Helper.plist,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		9FDA2B8A2F59D144001C8B57 /* Stunskin2 */ = {
+		9FE85F982F5A6CBC00D0CE3B /* Stunskin */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Stunskin2;
+			exceptions = (
+				9F86417D2F5F000F00FB73FD /* Exceptions for "Stunskin" folder in "Stunskin" target */,
+			);
+			path = Stunskin;
+			sourceTree = "<group>";
+		};
+		9FE85FB72F5A6DE800D0CE3B /* StunskinHelper */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9FE85FD02F5A70F900D0CE3B /* Exceptions for "StunskinHelper" folder in "Copy Files" phase from "Stunskin" target */,
+			);
+			path = StunskinHelper;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		9FDA2B852F59D144001C8B57 /* Frameworks */ = {
+		9FE85F942F5A6CBC00D0CE3B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE85FB32F5A6DE800D0CE3B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -32,7 +106,8 @@
 		9FDA2B7F2F59D144001C8B57 = {
 			isa = PBXGroup;
 			children = (
-				9FDA2B8A2F59D144001C8B57 /* Stunskin2 */,
+				9FE85F982F5A6CBC00D0CE3B /* Stunskin */,
+				9FE85FB72F5A6DE800D0CE3B /* StunskinHelper */,
 				9FDA2B892F59D144001C8B57 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -40,7 +115,8 @@
 		9FDA2B892F59D144001C8B57 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				9FDA2B882F59D144001C8B57 /* Stunskin2.app */,
+				9FE85F972F5A6CBC00D0CE3B /* Stunskin.app */,
+				9FE85FB62F5A6DE800D0CE3B /* StunskinHelper */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,27 +124,51 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		9FDA2B872F59D144001C8B57 /* Stunskin2 */ = {
+		9FE85F962F5A6CBC00D0CE3B /* Stunskin */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 9FDA2B932F59D145001C8B57 /* Build configuration list for PBXNativeTarget "Stunskin2" */;
+			buildConfigurationList = 9FE85F9F2F5A6CBD00D0CE3B /* Build configuration list for PBXNativeTarget "Stunskin" */;
 			buildPhases = (
-				9FDA2B842F59D144001C8B57 /* Sources */,
-				9FDA2B852F59D144001C8B57 /* Frameworks */,
-				9FDA2B862F59D144001C8B57 /* Resources */,
+				9FE85F932F5A6CBC00D0CE3B /* Sources */,
+				9FE85F942F5A6CBC00D0CE3B /* Frameworks */,
+				9FE85F952F5A6CBC00D0CE3B /* Resources */,
+				9FE85FC62F5A702300D0CE3B /* CopyFiles */,
+				9FE85FC72F5A703100D0CE3B /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				9FDA2B8A2F59D144001C8B57 /* Stunskin2 */,
+				9FE85F982F5A6CBC00D0CE3B /* Stunskin */,
 			);
-			name = Stunskin2;
+			name = Stunskin;
 			packageProductDependencies = (
 			);
-			productName = Stunskin2;
-			productReference = 9FDA2B882F59D144001C8B57 /* Stunskin2.app */;
+			productName = Stunskin;
+			productReference = 9FE85F972F5A6CBC00D0CE3B /* Stunskin.app */;
 			productType = "com.apple.product-type.application";
+		};
+		9FE85FB52F5A6DE800D0CE3B /* StunskinHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9FE85FBA2F5A6DE800D0CE3B /* Build configuration list for PBXNativeTarget "StunskinHelper" */;
+			buildPhases = (
+				9FE85FB22F5A6DE800D0CE3B /* Sources */,
+				9FE85FB32F5A6DE800D0CE3B /* Frameworks */,
+				9FE85FB42F5A6DE800D0CE3B /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9FE85FB72F5A6DE800D0CE3B /* StunskinHelper */,
+			);
+			name = StunskinHelper;
+			packageProductDependencies = (
+			);
+			productName = StunskinHelper;
+			productReference = 9FE85FB62F5A6DE800D0CE3B /* StunskinHelper */;
+			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
@@ -80,7 +180,10 @@
 				LastSwiftUpdateCheck = 2630;
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
-					9FDA2B872F59D144001C8B57 = {
+					9FE85F962F5A6CBC00D0CE3B = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					9FE85FB52F5A6DE800D0CE3B = {
 						CreatedOnToolsVersion = 26.3;
 					};
 				};
@@ -99,13 +202,14 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				9FDA2B872F59D144001C8B57 /* Stunskin2 */,
+				9FE85F962F5A6CBC00D0CE3B /* Stunskin */,
+				9FE85FB52F5A6DE800D0CE3B /* StunskinHelper */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		9FDA2B862F59D144001C8B57 /* Resources */ = {
+		9FE85F952F5A6CBC00D0CE3B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -115,7 +219,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		9FDA2B842F59D144001C8B57 /* Sources */ = {
+		9FE85F932F5A6CBC00D0CE3B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE85FB22F5A6DE800D0CE3B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -245,27 +356,29 @@
 			};
 			name = Release;
 		};
-		9FDA2B942F59D145001C8B57 /* Debug */ = {
+		9FE85FA02F5A6CBD00D0CE3B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 28G27783GF;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Stunskin/Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = Thrill32.Stunskin2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Thrill32.Stunskin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -277,33 +390,67 @@
 			};
 			name = Debug;
 		};
-		9FDA2B952F59D145001C8B57 /* Release */ = {
+		9FE85FA12F5A6CBD00D0CE3B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 28G27783GF;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Stunskin/Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = Thrill32.Stunskin2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Thrill32.Stunskin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		9FE85FBB2F5A6DE800D0CE3B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 28G27783GF;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = /Users/wills/Stunskin2/StunskinHelper/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Thrill32.Stunskin.Helper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9FE85FBC2F5A6DE800D0CE3B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 28G27783GF;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = /Users/wills/Stunskin2/StunskinHelper/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Thrill32.Stunskin.Helper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -321,11 +468,20 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		9FDA2B932F59D145001C8B57 /* Build configuration list for PBXNativeTarget "Stunskin2" */ = {
+		9FE85F9F2F5A6CBD00D0CE3B /* Build configuration list for PBXNativeTarget "Stunskin" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9FDA2B942F59D145001C8B57 /* Debug */,
-				9FDA2B952F59D145001C8B57 /* Release */,
+				9FE85FA02F5A6CBD00D0CE3B /* Debug */,
+				9FE85FA12F5A6CBD00D0CE3B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9FE85FBA2F5A6DE800D0CE3B /* Build configuration list for PBXNativeTarget "StunskinHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9FE85FBB2F5A6DE800D0CE3B /* Debug */,
+				9FE85FBC2F5A6DE800D0CE3B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
