@@ -25,6 +25,7 @@ class State {
         initDNS: [],
         initWDNS: [],
         initEDNS: [],
+        initDNSByService: [:],
         initRouting: [],
         gatewayIP: "",
         prevSettings: Settings(
@@ -44,9 +45,42 @@ class State {
         var initDNS: [String] //deprecated
         var initWDNS: [String]
         var initEDNS: [String]
+        var initDNSByService: [String: [String]]
         var initRouting: [String]
         var gatewayIP: String
         var prevSettings: Settings
+        
+        init(
+            running: Bool,
+            initDNS: [String],
+            initWDNS: [String],
+            initEDNS: [String],
+            initDNSByService: [String: [String]],
+            initRouting: [String],
+            gatewayIP: String,
+            prevSettings: Settings
+        ) {
+            self.running = running
+            self.initDNS = initDNS
+            self.initWDNS = initWDNS
+            self.initEDNS = initEDNS
+            self.initDNSByService = initDNSByService
+            self.initRouting = initRouting
+            self.gatewayIP = gatewayIP
+            self.prevSettings = prevSettings
+        }
+        
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            running = try container.decode(Bool.self, forKey: .running)
+            initDNS = try container.decodeIfPresent([String].self, forKey: .initDNS) ?? []
+            initWDNS = try container.decodeIfPresent([String].self, forKey: .initWDNS) ?? []
+            initEDNS = try container.decodeIfPresent([String].self, forKey: .initEDNS) ?? []
+            initDNSByService = try container.decodeIfPresent([String: [String]].self, forKey: .initDNSByService) ?? [:]
+            initRouting = try container.decodeIfPresent([String].self, forKey: .initRouting) ?? []
+            gatewayIP = try container.decodeIfPresent(String.self, forKey: .gatewayIP) ?? ""
+            prevSettings = try container.decode(Settings.self, forKey: .prevSettings)
+        }
     }
     
 
@@ -76,4 +110,3 @@ class State {
     }
 
 }
-
