@@ -16,10 +16,10 @@ struct HomeView : View {
             Image(systemName: "globe")
                 .imageScale(.large)
                 .foregroundStyle(.tint)
-            Text("Hello, world!")
+            Text("Stunskin")
             HStack(spacing:10) {
-                Text("What's up slime")
-                Text("You  gooner")
+                Text("Sample Text")
+                Text("A")
                     .background(.yellow.opacity(0.4))
             
             }

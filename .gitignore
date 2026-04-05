@@ -1,9 +1,36 @@
+# Secrets / config
 .env
 .env.*
-Stunnel.conf
-*.OVPN
+*.conf
+*.ovpn
 
+# Logs
 *.log
 
+# macOS
 .DS_Store
 Thumbs.db
+
+# Xcode user-specific
+**/xcuserdata/
+*.xcuserstate
+
+# Build products
+DerivedData/
+build/
+.build/
+
+# Swift Package Manager
+.swiftpm/
+Packages/
+
+# Xcode / legacy user prefs
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
