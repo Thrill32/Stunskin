@@ -41,14 +41,12 @@ class DaemonManager {
         client.connect()
         
         
-        client.initVPNConnection(jsonSettings: jsonSettings) { String in } //checkmate horrible code
-//        client.disconnect()
+        client.initVPNConnection(jsonSettings: jsonSettings) { String in }
     }
     
     func endConnection() {
         client.connect()
         
         client.endVPNConnection() {String in }
-//        client.disconnect()
     }
 }

@@ -52,12 +52,8 @@ class BaseViewModel : ObservableObject {
     
     init() {
         let defaults = UserDefaults.standard
-//        self.stunnelConfPath = defaults.string(forKey: "stunnelConfPath") ?? ""
-//        self.OVPNConfPath = defaults.string(forKey: "OVPNConfPath") ?? ""
         
-        self.curSettings = Settings(targetIP: "", DNS: [], stunnelPath: "", OVPNPath: "") //chicken and egg annoyances
-        
-        //worst userdefault line of code ever (works well but just look at it):
+        self.curSettings = Settings(targetIP: "", DNS: [], stunnelPath: "", OVPNPath: "")
         
         self.curSettings = (try? fromJSON(js: defaults.string(forKey: "curSettingsJSON") ?? "")) ?? Settings(targetIP: "", DNS: [], stunnelPath: "", OVPNPath: "")
         stunnelConfContent = readConf(path: self.curSettings.stunnelPath)

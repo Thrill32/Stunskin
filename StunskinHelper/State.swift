@@ -6,9 +6,6 @@ let stateFile = "\(stateDir)/daemon-state.json"
 
 
 //used for storing configuration data before vpn is run to reset to
-//also needs to run at startup for proper settings in case of unexpected shutdown
-//[unexp shtd not implemented yet]
-
 
 public struct Settings : Codable {
     var targetIP: String
