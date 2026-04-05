@@ -188,7 +188,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 9FDA2B832F59D144001C8B57 /* Build configuration list for PBXProject "Stunskin2" */;
+			buildConfigurationList = 9FDA2B832F59D144001C8B57 /* Build configuration list for PBXProject "Stunskin" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -459,7 +459,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		9FDA2B832F59D144001C8B57 /* Build configuration list for PBXProject "Stunskin2" */ = {
+		9FDA2B832F59D144001C8B57 /* Build configuration list for PBXProject "Stunskin" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9FDA2B912F59D145001C8B57 /* Debug */,

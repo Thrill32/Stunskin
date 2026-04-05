@@ -1,6 +1,7 @@
 .env
 .env.*
 Stunnel.conf
+*.OVPN
 
 *.log
 
