@@ -1,0 +1,8 @@
+.env
+.env.*
+Stunnel.conf
+
+*.log
+
+.DS_Store
+Thumbs.db
