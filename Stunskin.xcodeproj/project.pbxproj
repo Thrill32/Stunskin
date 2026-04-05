@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9FA077352F82FC6300878589 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 9FA077342F82FC6100878589 /* README.md */; };
 		9FE85FCD2F5A70A500D0CE3B /* StunskinHelper in CopyFiles */ = {isa = PBXBuildFile; fileRef = 9FE85FB62F5A6DE800D0CE3B /* StunskinHelper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -42,6 +43,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		9FA077342F82FC6100878589 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		9FE85F972F5A6CBC00D0CE3B /* Stunskin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stunskin.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9FE85FB62F5A6DE800D0CE3B /* StunskinHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StunskinHelper; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -106,6 +108,7 @@
 		9FDA2B7F2F59D144001C8B57 = {
 			isa = PBXGroup;
 			children = (
+				9FA077342F82FC6100878589 /* README.md */,
 				9FE85F982F5A6CBC00D0CE3B /* Stunskin */,
 				9FE85FB72F5A6DE800D0CE3B /* StunskinHelper */,
 				9FDA2B892F59D144001C8B57 /* Products */,
@@ -223,6 +226,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9FA077352F82FC6300878589 /* README.md in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
