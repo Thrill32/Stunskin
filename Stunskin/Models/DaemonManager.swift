@@ -6,6 +6,7 @@ class DaemonManager {
     public var helperVersion = ""
     public var client = XPCClient()
     public var commandOutput = ""
+    public var runResult = false
     
     func register() throws {
         try SMAppService.daemon(plistName: "com.Thrill32.Stunskin.Helper.plist").register()
@@ -22,6 +23,16 @@ class DaemonManager {
         client.getVersion { version in
             DispatchQueue.main.async {
                 self.helperVersion = version 
+            }
+        }
+    }
+    
+    func isRunning() {
+        client.connect()
+        
+        client.isRunning { ans in
+            DispatchQueue.main.sync {
+                self.runResult = ans
             }
         }
     }

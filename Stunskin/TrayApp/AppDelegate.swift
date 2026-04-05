@@ -2,6 +2,10 @@ import Cocoa
 import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+    private struct DaemonState: Decodable {
+        let running: Bool
+    }
+
     var statusItem: NSStatusItem!
     var windowController: NSWindowController?
     
@@ -14,13 +18,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let lockClosedSymbol = "lock.fill"
     
     private var toggleVPNItem: NSMenuItem!
+    private var isVPNRunning = false
+    private var stateDirectoryWatcher: DispatchSourceFileSystemObject?
+    private var stateDirectoryFileDescriptor: CInt = -1
+    
+    private let stateDirectoryPath = "/Library/Application Support/Thrill32/Stunskin"
+    private let stateFilePath = "/Library/Application Support/Thrill32/Stunskin/daemon-state.json"
     
     private var vpnMenuTitle: String {
-        dm.isInit ? "Disable VPN" : "Enable VPN"
+        isVPNRunning ? "Disable VPN" : "Enable VPN"
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
+        refreshVPNState()
+        startMonitoringVPNState()
+    }
+    
+    func applicationWillTerminate(_ notification: Notification) {
+        stopMonitoringVPNState()
     }
     
     private func setupStatusItem() {
@@ -28,8 +44,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         if let button = statusItem.button {
             buttonIcon = button
-            button.image = NSImage(systemSymbolName: lockOpenSymbol, accessibilityDescription: "Stunskin")
-
+            updateStatusUI()
         }
 
         statusItem.menu = buildMenu()
@@ -85,7 +100,67 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func menuWillOpen(_ menu: NSMenu) {
-        toggleVPNItem.title = vpnMenuTitle
+        refreshVPNState()
+    }
+    
+    private func refreshVPNState() {
+        let isRunning = readVPNRunningState()
+        
+        DispatchQueue.main.async {
+            self.isVPNRunning = isRunning
+            self.updateStatusUI()
+        }
+    }
+    
+    private func readVPNRunningState() -> Bool {
+        guard
+            let data = try? Data(contentsOf: URL(fileURLWithPath: stateFilePath)),
+            let state = try? JSONDecoder().decode(DaemonState.self, from: data)
+        else {
+            return false
+        }
+        
+        return state.running
+    }
+    
+    private func updateStatusUI() {
+        toggleVPNItem?.title = vpnMenuTitle
+        buttonIcon?.image = NSImage(
+            systemSymbolName: isVPNRunning ? lockClosedSymbol : lockOpenSymbol,
+            accessibilityDescription: "Stunskin"
+        )
+    }
+    
+    private func startMonitoringVPNState() {
+        stopMonitoringVPNState()
+        
+        stateDirectoryFileDescriptor = open(stateDirectoryPath, O_EVTONLY)
+        guard stateDirectoryFileDescriptor >= 0 else { return }
+        
+        let watcher = DispatchSource.makeFileSystemObjectSource(
+            fileDescriptor: stateDirectoryFileDescriptor,
+            eventMask: [.write, .delete, .rename],
+            queue: DispatchQueue.global(qos: .utility)
+        )
+        
+        watcher.setEventHandler { [weak self] in
+            self?.refreshVPNState()
+        }
+        
+        watcher.setCancelHandler { [fileDescriptor = stateDirectoryFileDescriptor] in
+            if fileDescriptor >= 0 {
+                close(fileDescriptor)
+            }
+        }
+        
+        stateDirectoryWatcher = watcher
+        watcher.resume()
+    }
+    
+    private func stopMonitoringVPNState() {
+        stateDirectoryWatcher?.cancel()
+        stateDirectoryWatcher = nil
+        stateDirectoryFileDescriptor = -1
     }
     
     @objc func openMainWindow() {
@@ -108,18 +183,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
     
-    @objc func toggleVPN() { //checks status on menu open so should be well updated for user
-        if (dm.isInit) {
+    @objc func toggleVPN() {
+        if isVPNRunning {
             dm.endConnection()
-            buttonIcon.image = NSImage(systemSymbolName: lockOpenSymbol, accessibilityDescription: "Stunskin")
+            isVPNRunning = false
         } else {
             dm.initConnection()
-            buttonIcon.image = NSImage(systemSymbolName: lockClosedSymbol, accessibilityDescription: "Stunskin")
+            isVPNRunning = true
         }
+        
+        updateStatusUI()
     }
 
     @objc func showAbout() {
         NSApp.orderFrontStandardAboutPanel(nil)
     }
 }
-

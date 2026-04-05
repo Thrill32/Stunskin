@@ -9,7 +9,7 @@ class DaemonViewModel : ObservableObject {
     @Published var version = ""
     @Published var output: String = ""
     
-    public var isInit = false //should work alright with a simple local toggle as endvpn just kills stunnel and ovpn anyawys
+//    public var isInit = false
     
     private let bm: BaseViewModel
     
@@ -27,15 +27,21 @@ class DaemonViewModel : ObservableObject {
         manager.test()
         version = manager.helperVersion
     }
+    
+    func isRunning() -> Bool {
+        manager.isRunning()
+        return manager.runResult
+    }
+    
     func initConnection() {
-        isInit = true
+//        isInit = true
         let json = String(data: try! JSONEncoder().encode(bm.curSettings), encoding: .utf8)!
         
         manager.initConnection(jsonSettings:json)
     }
     
     func endConnection() {
-        isInit = false
+//        isInit = false
         manager.endConnection()
     }
     

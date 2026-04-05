@@ -25,6 +25,15 @@ class XPCClient {
         helper.getVersion(reply: reply)
     }
     
+    func isRunning(reply: @escaping (Bool) -> Void) {
+        guard let helper = connection?.remoteObjectProxyWithErrorHandler({ error in
+            print("XPC error: \(error)")
+            reply(false)
+        }) as? HelperProtocol else { return }
+        
+        helper.isRunning(reply: reply)
+    }
+    
     func disconnect() {
         connection?.invalidate()
         connection = nil

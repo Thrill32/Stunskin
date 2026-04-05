@@ -130,9 +130,12 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
         return true
     }
     
-    // MARK: - HelperProtocol
     func getVersion(reply: @escaping (String) -> Void) {
         reply("1.0.0")
+    }
+    
+    func isRunning(reply: @escaping (Bool) -> Void) {
+        reply(state.currentData.running)
     }
     
     func hasFullDiskAccess() -> Bool {

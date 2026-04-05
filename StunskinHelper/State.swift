@@ -33,7 +33,7 @@ class State {
            stunnelPath: "",
            OVPNPath: ""
         )
-    )
+    ) //merge gateway into prev at some point
     
     private init() { 
         loadState()
