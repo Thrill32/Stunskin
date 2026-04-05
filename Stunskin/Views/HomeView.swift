@@ -18,9 +18,7 @@ struct HomeView : View {
                 .foregroundStyle(.tint)
             Text("Stunskin")
             HStack(spacing:10) {
-                Text("Sample Text")
-                Text("A")
-                    .background(.yellow.opacity(0.4))
+                Text("Debug Buttons (Daemon should be registered with status 1 for usage)")
             
             }
             .padding()
