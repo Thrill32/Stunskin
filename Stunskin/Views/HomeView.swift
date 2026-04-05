@@ -37,14 +37,14 @@ struct HomeView : View {
                 Text("Version: \(dm.version)")
                 Text("Output: \(dm.output)")
             }
-            HStack(spacing: 25) {
-                Button("Init Connection") {
-                    dm.initConnection()
-                }
-                Button("End Connection") {
-                    dm.endConnection()
-                }
-            }
+//            HStack(spacing: 25) {
+//                Button("Init Connection") {
+//                    dm.initConnection()
+//                }
+//                Button("End Connection") {
+//                    dm.endConnection()
+//                }
+//            }
             
         }
         .padding()
