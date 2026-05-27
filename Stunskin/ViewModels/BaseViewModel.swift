@@ -18,7 +18,7 @@ class BaseViewModel : ObservableObject {
     public static let shared = BaseViewModel()
     
     public lazy var dm: DaemonViewModel = DaemonViewModel()
-
+    public lazy var fm: FileViewModel = FileViewModel()
     
 //    @Published var stunnelConfPath = #""# {
 //        didSet { UserDefaults.standard.set(stunnelConfPath, forKey: "stunnelConfPath")

@@ -14,5 +14,12 @@ struct StunskinApp: App {
         WindowGroup { //keep app alive while making it launchable from the AppDelegate
             EmptyView()
         }.defaultSize(width: 0, height: 0)
+        
+        
     }
 }
+
+#Preview {
+    ContentView()
+}
+

@@ -14,16 +14,57 @@ func getPath() -> String { //Reserved on IOS
     return ""
 }
 
+func getDirectoryPath() -> String {
+    let panel = NSOpenPanel()
+    panel.canChooseFiles = false
+    panel.canChooseDirectories = true
+    panel.allowsMultipleSelection = false
+
+    if panel.runModal() == .OK {
+        return panel.url?.path ?? ""
+    }
+    return ""
+}
+
 func saveTo(content: String, path: String) {
     let allowed = [".conf", ".ovpn"]
     if !allowed.contains(where: { path.hasSuffix($0) }) {
-        print("Not a conf file..pls dont mess up stuff")
+        print("Not a conf file.. dont break things")
         return
     }
     do {
         try content.write(toFile: path, atomically: true, encoding: .utf8)
     } catch {
         print("Save failed: \(error)")
+    }
+}
+
+struct CustomDisclosureView<Content: View>: View {
+    @State private var isExpanded = false
+    
+    let title: String
+    let content: Content
+    
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            content
+        } label: {
+            HStack {
+                Text(title)
+                Spacer()
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation {
+                    isExpanded.toggle()
+                }
+            }
+        }
     }
 }
 
@@ -37,7 +78,17 @@ struct SettingsView : View {
     var body: some View {
         ScrollView {
             VStack(spacing: 15) {
-                DisclosureGroup("Stunnel") {
+                HStack(spacing: 10) {
+                    Text("Stuninstall Quick Setup (Select given folder)")
+                    Button("Browse") {
+                        DispatchQueue.main.async {
+                            let path = getDirectoryPath()
+                            bm.fm.readFolder(stunInfoPath: path)
+                        }
+                    }
+                }
+                
+                CustomDisclosureView(title: "Stunnel") {
                     VStack {
                         HStack(spacing: 10) {
                             TextField("Stunnel .conf Path", text: $bm.curSettings.stunnelPath)
@@ -65,7 +116,8 @@ struct SettingsView : View {
                         }
                     }
                 }
-                DisclosureGroup("OpenVPN") {
+                
+                CustomDisclosureView(title: "OpenVPN") {
                     VStack {
                         HStack(spacing: 10) {
                             TextField("OpenVPN .ovpn Path", text: $bm.curSettings.OVPNPath)
@@ -93,7 +145,7 @@ struct SettingsView : View {
                         }
                     }
                 }
-                DisclosureGroup("General Settings") {
+                CustomDisclosureView(title: "General Settings") {
                     VStack(spacing: 10) {
                         TextField("Target IP Address", text: $bm.curSettings.targetIP)
                             .textFieldStyle(.roundedBorder)
