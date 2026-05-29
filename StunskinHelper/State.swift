@@ -1,11 +1,11 @@
 import Foundation
 import SystemConfiguration
 
-let stateDir = "/Library/Application Support/Thrill32/Stunskin"
+let stateDir = "/Library/Application Support/Stunskin"
 let stateFile = "\(stateDir)/daemon-state.json"
 
 
-//used for storing configuration data before vpn is run to reset to
+//used for storing configuration data before vpn is run to reset
 
 public struct Settings : Codable {
     var targetIP: String

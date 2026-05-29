@@ -12,6 +12,12 @@ struct HomeView : View {
     }
     
     var body : some View {
+        //TODO: Replace current daemon logic with simpler screen. Home UI should have a toggle connection switch, a short guide accessable with a button, and a register daemon button called "Setup"
+        // - Unregister Daemon should be replaced with a full "abort" button that shuts off vpn, deletes routing settings, force closes all openvpn/stunnel instances, clears dns settings, & Unregisters the daemon. This is in case of VPN failure while it's not in a super stable state
+        // - TrayApp also needs to update live as VPN status changes. It should also have an icon to represent the attempted reconnect when sleep ends. This will remedy the need to click on it multiple times to determine connection status
+        // - Also update Status information to have simple text variations depending on status value. Version is unnecessary
+        // - App install needs a short user popup where things like deregistering (if on) and re-registering the daemon can occur for program to function. User needs to allow the daemon in settings, so it should be well-guided. Same with FDA.. until its fixed by including binaries..
+        
         VStack(spacing:20) {
             Image(systemName: "globe")
                 .imageScale(.large)

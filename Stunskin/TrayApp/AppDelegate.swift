@@ -22,8 +22,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var stateDirectoryWatcher: DispatchSourceFileSystemObject?
     private var stateDirectoryFileDescriptor: CInt = -1
     
-    private let stateDirectoryPath = "/Library/Application Support/Thrill32/Stunskin"
-    private let stateFilePath = "/Library/Application Support/Thrill32/Stunskin/daemon-state.json"
+    private let stateDirectoryPath = "/Library/Application Support/Stunskin"
+    private let stateFilePath = "/Library/Application Support/Stunskin/daemon-state.json"
     
     private var vpnMenuTitle: String {
         isVPNRunning ? "Disable VPN" : "Enable VPN"

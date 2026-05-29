@@ -3,6 +3,8 @@ import os.log
 import AppKit
 import Network
 
+//TODO: Largely rework daemon functionality. Native alternatives to CLIs should be used. Openvpn and stunnel should also be packaged with the app to remove the need to full disk access. Will need to check out liscensing information for that, but both should be GLPv2
+
 class SleepManager {
     
     let log = OSLog(subsystem: "com.Thrill32.Stunskin.Helper", category: "general")
