@@ -300,19 +300,24 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
 
     private func runOVPN(_ configPath: String) throws {
         ovpnProcess = Process()
-        ovpnProcess?.executableURL = URL(fileURLWithPath: "/opt/homebrew/sbin/openvpn")
+//        ovpnProcess?.executableURL = URL(fileURLWithPath: "/opt/homebrew/sbin/openvpn")
+        
+        ovpnProcess?.executableURL = Bundle.main.bundleURL
+            .appendingPathComponent("openvpn", isDirectory: false)
         ovpnProcess?.arguments = ["--config", configPath]
         ovpnProcess?.environment = commandEnvironment
         try ovpnProcess?.run()
     }
     
     private func runStunnel(_ configPath: String) throws {
-        guard let binaryPath = stunnelBinaryPath() else {
-            throw HelperError.missingBinary("stunnel")
-        }
+//        guard let binaryPath = stunnelBinaryPath() else {
+//            throw HelperError.missingBinary("stunnel")
+//        }
         
         stunnelProcess = Process()
-        stunnelProcess?.executableURL = URL(fileURLWithPath: binaryPath)
+//        stunnelProcess?.executableURL = URL(fileURLWithPath: binaryPath)
+    stunnelProcess?.executableURL = Bundle.main.bundleURL
+        .appendingPathComponent("stunnel", isDirectory: false)
         stunnelProcess?.arguments = [configPath]
         stunnelProcess?.environment = commandEnvironment
         try stunnelProcess?.run()
@@ -399,6 +404,7 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
         os_log("initConnection start", log: log, type: .default)
         resetConnectionState()
         
+//        os_log("Stunskin path: %{public}@", log: log, type: .error, Bundle.main.bundleURL.path) //this worked and pointed to .../Content/Helpers/
         do {
             let curSettings = try decodeSettings(from: jsonSettings)
             state.currentData.prevSettings = curSettings
@@ -435,13 +441,17 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
             try runStunnel(curSettings.stunnelPath)
             os_log("stunnel start: %{public}@", log: log, type: .default, curSettings.stunnelPath)
             
-            Thread.sleep(forTimeInterval: 0.1)
+            Thread.sleep(forTimeInterval: 0.1) //TODO: replace thread.sleep
             try runOVPN(curSettings.OVPNPath)
+            os_log("OVPN start: %{public}@", log: log, type: .default, curSettings.OVPNPath)
             
             Thread.sleep(forTimeInterval: 0.8)
             
-            let stunnelRunning = isProcessRunning("stunnel")
-            let openVPNRunning = isProcessRunning("openvpn")
+            let stunnelRunning: Bool! = isProcessRunning("stunnel")
+            let openVPNRunning: Bool! = isProcessRunning("openvpn")
+            
+            os_log("OVPN: %{public}s | Stunnel: %{public}s", log: log, type: .error, String(openVPNRunning), String(stunnelRunning))
+            
             guard stunnelRunning, openVPNRunning else {
                 throw HelperError.startupFailed(
                     "VPN startup validation failed. stunnel running: \(stunnelRunning), openvpn running: \(openVPNRunning)"
