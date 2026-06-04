@@ -5,6 +5,8 @@ import Network
 
 //TODO: Largely rework daemon functionality. Native alternatives to CLIs should be used. Openvpn and stunnel should also be packaged with the app to remove the need to full disk access. Will need to check out liscensing information for that, but both should be GLPv2
 
+//TODO: Convert binaries to json and send through XPC. Can store in /Library/Application Support if necessary. FDA is a file permissions issue, not an OpenVPN one.
+
 class SleepManager {
     
     let log = OSLog(subsystem: "com.Thrill32.Stunskin.Helper", category: "general")
@@ -103,7 +105,14 @@ class SleepManager {
     }
 }
 
+public struct FileJSONData : Codable {
+    var stunnelConf: String
+    var stunnelPem: String
+    var OVPNConf: String
+}
+
 class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
+    
     private struct CommandResult {
         let output: String
         let status: Int32
@@ -143,7 +152,7 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
     }
     
     private let commandEnvironment = [
-        "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/opt/homebrew/sbin"
+        "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" //removed homebrew
     ]
     private let primaryInterface = "en0"
     
@@ -297,15 +306,29 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
     }
     
     private var ovpnProcess: Process?
-
+    
+    private var OVPNPWPath = "/Library/Application Support/Stunskin/tmp/ovpn-mgmt.pw"
+    
     private func runOVPN(_ configPath: String) throws {
         ovpnProcess = Process()
 //        ovpnProcess?.executableURL = URL(fileURLWithPath: "/opt/homebrew/sbin/openvpn")
         
         ovpnProcess?.executableURL = Bundle.main.bundleURL
             .appendingPathComponent("openvpn", isDirectory: false)
-        ovpnProcess?.arguments = ["--config", configPath]
-        ovpnProcess?.environment = commandEnvironment
+//        ovpnProcess?.arguments = ["--config", configPath]
+        
+        let password = UUID().uuidString
+        let pwFile = URL(fileURLWithPath: OVPNPWPath)
+        try password.write(to: pwFile, atomically: true, encoding: .utf8)
+
+        ovpnProcess?.arguments = [
+            "--config", configPath,
+            "--management", "localhost", "7505", pwFile.path,
+            "--management-hold",
+            "--management-query-passwords"
+        ]
+        
+//        ovpnProcess?.environment = commandEnvironment
         try ovpnProcess?.run()
     }
     
@@ -316,10 +339,10 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
         
         stunnelProcess = Process()
 //        stunnelProcess?.executableURL = URL(fileURLWithPath: binaryPath)
-    stunnelProcess?.executableURL = Bundle.main.bundleURL
+        stunnelProcess?.executableURL = Bundle.main.bundleURL
         .appendingPathComponent("stunnel", isDirectory: false)
         stunnelProcess?.arguments = [configPath]
-        stunnelProcess?.environment = commandEnvironment
+//        stunnelProcess?.environment = commandEnvironment
         try stunnelProcess?.run()
     }
     
@@ -472,11 +495,164 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
         }
     }
     
+    private func decodeFiles(from jsonFiles: String) throws -> FileJSONData {
+        guard let data = jsonFiles.data(using: .utf8) else {
+            throw HelperError.invalidPayload
+        }
+        
+        let file = try JSONDecoder().decode(FileJSONData.self, from: data)
+        return file
+    }
+    
+    private func readFileString(_ filePath: String) -> String? {
+        let fileURL = URL(fileURLWithPath: filePath)
+        do {
+            let rawData = try Data(contentsOf: fileURL)
+            return String(data: rawData, encoding: .utf8)
+        } catch {
+            print("Error reading file: \(error)")
+            return nil
+        }
+    }
+    
+    func cleanTmpDirectory() throws {
+        let fm = FileManager.default
+        let tmpURL = URL(fileURLWithPath: "/Library/Application Support/Stunskin/tmp")
+        let extensionsToDelete: Set<String> = ["conf", "pem", "ovpn"]
+        
+        let files = try fm.contentsOfDirectory(at: tmpURL, includingPropertiesForKeys: nil)
+        
+        for file in files where extensionsToDelete.contains(file.pathExtension) {
+            try fm.removeItem(at: file)
+        }
+    }
+    
+    private var vpn: OVPNManager
+    
+    func newInitConnection(jsonSettings: String, jsonFiles: String, reply: @escaping (String) -> Void) {
+        
+        os_log("initConnection start v2", log: log, type: .default)
+        resetConnectionState()
+        do {
+            try cleanTmpDirectory()
+
+            let curSettings = try decodeSettings(from: jsonSettings)
+            state.currentData.prevSettings = curSettings
+            
+            state.currentData.gatewayIP = try defaultGateway()
+            let interfaceIP = try interfaceAddress(primaryInterface)
+            
+            ignoreCommandFailure(
+                executable: "/sbin/route",
+                arguments: ["-n", "delete", "-host", curSettings.targetIP, state.currentData.gatewayIP]
+            )
+            ignoreCommandFailure(
+                executable: "/sbin/route",
+                arguments: ["-n", "delete", "-host", curSettings.targetIP, interfaceIP, "-ifscope", primaryInterface]
+            )
+            
+            try ensureSuccess(
+                runCommand(
+                    executable: "/sbin/route",
+                    arguments: ["-n", "add", "-host", curSettings.targetIP, state.currentData.gatewayIP, "-ifscope", primaryInterface]
+                ),
+                operation: "Adding route for \(curSettings.targetIP)"
+            )
+            
+            let services = try availableNetworkServices()
+            state.currentData.initDNSByService = snapshotDNS(for: services)
+            state.currentData.initWDNS = state.currentData.initDNSByService["Wi-Fi"] ?? []
+            state.currentData.initEDNS = state.currentData.initDNSByService["Ethernet"] ?? []
+            
+            for service in services {
+                try setDNS(curSettings.DNS, service: service)
+            }
+            
+            var Files: FileJSONData = try decodeFiles(from: jsonFiles)
+            
+            try Files.OVPNConf.write(
+                to: URL(fileURLWithPath: "/Library/Application Support/Stunskin/tmp/curovpn.ovpn"),
+                atomically: true,
+                encoding: .utf8
+            )
+            
+            try Files.stunnelPem.write(
+                to: URL(fileURLWithPath: "/Library/Application Support/Stunskin/tmp/curpem.pem"),
+                atomically: true,
+                encoding: .utf8
+            )
+            
+            try Files.stunnelConf.write(
+                to: URL(fileURLWithPath: "/Library/Application Support/Stunskin/tmp/curstunconf.conf"),
+                atomically: true,
+                encoding: .utf8
+            )
+            
+            
+            var newStunnelConf = Files.stunnelConf.replacingOccurrences(
+                of: #"CAfile = .*"#,
+                with: "CAfile = /Library/Application Support/Stunskin/tmp/curpem.pem",
+                options: .regularExpression
+            )
+            
+            try newStunnelConf.write(to: URL(fileURLWithPath: "/Library/Application Support/Stunskin/tmp/curstunconf.conf"), atomically: true, encoding: .utf8)
+                
+            try runStunnel("/Library/Application Support/Stunskin/tmp/curstunconf.conf")
+            os_log("stunnel start: %{public}@", log: log, type: .default, curSettings.stunnelPath)
+            
+//            try runOVPN("/Library/Application Support/Stunskin/tmp/curovpn.ovpn")
+            vpn = OVPNManager()
+
+            vpn.onStateChange = { state in
+                switch state {
+                case .connected:      // update UI, start power assertion
+                case .disconnected:   // update UI, release power assertion
+                case .connecting:     // show spinner
+                case .disconnecting:  // show spinner
+                case .failed(let e):  // show error
+                }
+            }
+
+            vpn.onLog       = { log  in /* pipe to os_log or your logging system */ }
+            vpn.onByteCount = { i, o in /* update bandwidth display */ }
+
+            try vpn.start(configPath: "/Library/Application Support/Stunskin/tmp/curovpn.ovpn")
+            os_log("ovpn start: %{public}@", log: log, type: .default, "/Library/Application Support/Stunskin/tmp/curovpn.ovpn")
+            
+            
+            let stunnelRunning: Bool! = isProcessRunning("stunnel")
+            let openVPNRunning: Bool! = isProcessRunning("openvpn")
+            
+            
+            guard stunnelRunning, openVPNRunning else {
+                throw HelperError.startupFailed(
+                    "VPN startup validation failed. stunnel running: \(stunnelRunning), openvpn running: \(openVPNRunning)"
+                )
+            }
+            
+            state.currentData.running = true
+            state.saveState()
+            
+            reply("Success")
+            
+            os_log("InitSaveSuccess", log: log, type: .default)
+            
+        } catch {
+            rollbackConnectionSetup()
+            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            os_log("initConnection failed: %{public}@", log: log, type: .error, message)
+            reply("Failure: \(message)")
+        }
+    }
+    
     func endConnection(reply: @escaping (String) -> Void) {
         os_log("endConnection start", log: log, type: .default)
         
         ignoreCommandFailure(executable: "/usr/bin/pkill", arguments: ["-x", "stunnel"])
-        ignoreCommandFailure(executable: "/usr/bin/pkill", arguments: ["-x", "openvpn"])
+//        ignoreCommandFailure(executable: "/usr/bin/pkill", arguments: ["-x", "openvpn"])
+        do {
+            vpn.stop()
+        }
         
         if !state.currentData.prevSettings.targetIP.isEmpty, !state.currentData.gatewayIP.isEmpty {
             ignoreCommandFailure(

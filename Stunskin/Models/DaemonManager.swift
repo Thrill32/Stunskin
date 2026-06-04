@@ -44,6 +44,13 @@ class DaemonManager {
         client.initVPNConnection(jsonSettings: jsonSettings) { String in }
     }
     
+    func newInitConnection(jsonSettings: String, jsonFiles: String) {
+        client.connect()
+        
+        
+        client.newInitVPNConnection(jsonSettings: jsonSettings, jsonFiles: jsonFiles) { String in }
+    }
+    
     func endConnection() {
         client.connect()
         

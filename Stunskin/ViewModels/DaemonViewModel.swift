@@ -3,6 +3,12 @@ import Security
 import ServiceManagement
 import Combine
 
+public struct FileJSONData : Codable {
+    var stunnelConf: String
+    var stunnelPem: String
+    var OVPNConf: String
+}
+
 @MainActor
 class DaemonViewModel : ObservableObject {
     @Published var status: SMAppService.Status = .notRegistered
@@ -38,6 +44,21 @@ class DaemonViewModel : ObservableObject {
         let json = String(data: try! JSONEncoder().encode(bm.curSettings), encoding: .utf8)!
         
         manager.initConnection(jsonSettings:json)
+    }
+    
+    func newInitConnection() {
+        let jsonSettings = String(data: try! JSONEncoder().encode(bm.curSettings), encoding: .utf8)!
+        
+        let Files = FileJSONData(
+            stunnelConf: bm.readConf(path: bm.curSettings.stunnelPath),
+            stunnelPem: bm.readConf(path: ""), //TODO: read pemfile loc from stunnel conf
+            OVPNConf: bm.readConf(path: bm.curSettings.OVPNPath)
+        )
+        
+        let jsonFiles = String(data: try! JSONEncoder().encode(Files), encoding: .utf8)!
+        
+        
+        manager.newInitConnection(jsonSettings: jsonSettings, jsonFiles: jsonFiles)
     }
     
     func endConnection() {

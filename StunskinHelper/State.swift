@@ -1,7 +1,7 @@
 import Foundation
 import SystemConfiguration
 
-let stateDir = "/Library/Application Support/Stunskin"
+let stateDir = "/Library/Application Support/Stunskin/Data"
 let stateFile = "\(stateDir)/daemon-state.json"
 
 

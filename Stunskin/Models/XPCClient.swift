@@ -49,6 +49,16 @@ class XPCClient {
         helper.initConnection(jsonSettings: jsonSettings, reply: reply)
     }
     
+    func newInitVPNConnection(jsonSettings: String, jsonFiles: String, reply: @escaping (String) -> Void) {
+        guard let helper = connection?.remoteObjectProxyWithErrorHandler({ error in
+            print("XPC error: \(error)")
+            reply("error")
+        }) as? HelperProtocol else { return }
+        
+        print("InitCon on app!")
+        helper.newInitConnection(jsonSettings: jsonSettings, jsonFiles: jsonFiles, reply: reply)
+    }
+    
     func endVPNConnection(reply: @escaping (String) -> Void) {
         guard let helper = connection?.remoteObjectProxyWithErrorHandler({ error in
             print("XPC error: \(error)")
