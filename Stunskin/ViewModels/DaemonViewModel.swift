@@ -69,7 +69,6 @@ class DaemonViewModel : ObservableObject {
     func requestFolderPermission(completion: @escaping (URL?) -> Void) {
         let openPanel = NSOpenPanel()
         openPanel.title = "Select your Stunnel/OpenVPN Configuration Folder"
-        openPanel.showsResizeIndicator = true
         openPanel.showsHiddenFiles = false
         openPanel.canChooseFiles = false
         openPanel.canChooseDirectories = true
@@ -111,7 +110,6 @@ class DaemonViewModel : ObservableObject {
     }
     
     func endConnection() {
-//        isInit = false
         manager.endConnection()
     }
     

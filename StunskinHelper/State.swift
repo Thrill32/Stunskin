@@ -4,7 +4,6 @@ import SystemConfiguration
 let stateDir = "/Library/Application Support/Stunskin/Data"
 let stateFile = "\(stateDir)/daemon-state.json"
 
-
 //used for storing configuration data before vpn is run to reset
 
 public struct Settings : Codable {
@@ -12,7 +11,7 @@ public struct Settings : Codable {
     var DNS: [String]
     var stunnelPath: String
     var OVPNPath: String
-} //not making a framework rn so manual duplication
+}
 
 class State {
     static let shared = State()

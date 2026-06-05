@@ -116,13 +116,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         
         setupStatusItem()
-//        refreshVPNState()
-//        startMonitoringVPNState()
     }
-    
-//    func applicationWillTerminate(_ notification: Notification) {
-//        stopMonitoringVPNState()
-//    }
     
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -184,30 +178,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return menu
     }
     
-//    func menuWillOpen(_ menu: NSMenu) {
-//        refreshVPNState()
-//    }
-    
-//    private func refreshVPNState() {
-//        let isRunning = readVPNRunningState()
-//        
-//        DispatchQueue.main.async {
-//            self.isVPNRunning = isRunning
-//            self.updateStatusUI()
-//        }
-//    }
-    
-//    private func readVPNRunningState() -> Bool {
-//        guard
-//            let data = try? Data(contentsOf: URL(fileURLWithPath: stateFilePath)),
-//            let state = try? JSONDecoder().decode(DaemonState.self, from: data)
-//        else {
-//            return false
-//        }
-//        
-//        return state.running
-//    }
-    
     private func updateStatusUI() {
         toggleVPNItem?.title = vpnMenuTitle
         
@@ -228,42 +198,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         buttonIcon?.image = NSImage(
             systemSymbolName: imageName,
                 
-//                isVPNRunning ? lockClosedSymbol : lockOpenSymbol,
             accessibilityDescription: "Stunskin"
         )
     }
-    
-//    private func startMonitoringVPNState() {
-//        stopMonitoringVPNState()
-//        
-//        stateDirectoryFileDescriptor = open(stateDirectoryPath, O_EVTONLY)
-//        guard stateDirectoryFileDescriptor >= 0 else { return }
-//        
-//        let watcher = DispatchSource.makeFileSystemObjectSource(
-//            fileDescriptor: stateDirectoryFileDescriptor,
-//            eventMask: [.write, .delete, .rename],
-//            queue: DispatchQueue.global(qos: .utility)
-//        )
-//        
-//        watcher.setEventHandler { [weak self] in
-//            self?.refreshVPNState()
-//        }
-//        
-//        watcher.setCancelHandler { [fileDescriptor = stateDirectoryFileDescriptor] in
-//            if fileDescriptor >= 0 {
-//                close(fileDescriptor)
-//            }
-//        }
-//        
-//        stateDirectoryWatcher = watcher
-//        watcher.resume()
-//    }
-//    
-//    private func stopMonitoringVPNState() {
-//        stateDirectoryWatcher?.cancel()
-//        stateDirectoryWatcher = nil
-//        stateDirectoryFileDescriptor = -1
-//    }
     
     @objc func openMainWindow() {
         if windowController == nil {
@@ -289,7 +226,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if VPNStatus == 2 {
             dm.endConnection()
         } else {
-            // Use the new init path that sends configs via XPC and start showing Connecting immediately
             dm.newInitConnection()
             VPNStatus = 1
         }

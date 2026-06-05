@@ -20,14 +20,6 @@ class BaseViewModel : ObservableObject {
     public lazy var dm: DaemonViewModel = DaemonViewModel()
     public lazy var fm: FileViewModel = FileViewModel()
     
-//    @Published var stunnelConfPath = #""# {
-//        didSet { UserDefaults.standard.set(stunnelConfPath, forKey: "stunnelConfPath")
-//        }
-//    }
-//    @Published var OVPNConfPath = #""# {
-//        didSet { UserDefaults.standard.set(OVPNConfPath, forKey: "OVPNConfPath")
-//        }
-//    }
     @Published var stunnelConfContent : String = ""
     @Published var OVPNConfContent : String = ""
     

@@ -158,8 +158,6 @@ struct SettingsView : View {
                     
                     Button("Delete") {
                         showingDeleteConfirmation = true
-//                        ProfileManager.deleteProfile(path: ProfileManager.simpleToURL(profileSaveName))
-//                        print("Deleting Fired: " + ProfileManager.simpleToURL(profileSaveName).path)
                     }
                     .confirmationDialog(
                         "Are you sure you want to delete this profile?",
