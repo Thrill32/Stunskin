@@ -30,7 +30,8 @@ class State {
            DNS: [],
            stunnelPath: "",
            OVPNPath: ""
-        )
+        ),
+        prevFilesJSON: ""
     ) //merge gateway into prev at some point
     
     private init() { 
@@ -46,6 +47,7 @@ class State {
         var initRouting: [String]
         var gatewayIP: String
         var prevSettings: Settings
+        var prevFilesJSON: String
         
         init(
             running: Bool,
@@ -55,7 +57,8 @@ class State {
             initDNSByService: [String: [String]],
             initRouting: [String],
             gatewayIP: String,
-            prevSettings: Settings
+            prevSettings: Settings,
+            prevFilesJSON: String
         ) {
             self.running = running
             self.initDNS = initDNS
@@ -65,6 +68,7 @@ class State {
             self.initRouting = initRouting
             self.gatewayIP = gatewayIP
             self.prevSettings = prevSettings
+            self.prevFilesJSON = prevFilesJSON
         }
         
         init(from decoder: Decoder) throws {
@@ -77,6 +81,7 @@ class State {
             initRouting = try container.decodeIfPresent([String].self, forKey: .initRouting) ?? []
             gatewayIP = try container.decodeIfPresent(String.self, forKey: .gatewayIP) ?? ""
             prevSettings = try container.decode(Settings.self, forKey: .prevSettings)
+            prevFilesJSON = try container.decode(String.self, forKey: .prevFilesJSON)
         }
     }
     

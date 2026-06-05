@@ -2,8 +2,9 @@ import Foundation
 import os.log
 import AppKit
 import Network
+import notify
 
-//TODO: Largely rework daemon functionality. Native alternatives to CLIs should be used. Openvpn and stunnel should also be packaged with the app to remove the need to full disk access. Will need to check out liscensing information for that, but both should be GLPv2
+//TODO: Largely rework daemon functionality. Native alternatives to CLIs should be used. Openvpn and stunnel should also be packaged with the app to remove the need to full disk access. Will need to check out liscencing information for that, but both should be GLPv2
 
 //TODO: Convert binaries to json and send through XPC. Can store in /Library/Application Support if necessary. FDA is a file permissions issue, not an OpenVPN one.
 
@@ -93,7 +94,8 @@ class SleepManager {
             if isConnected {
                 DispatchQueue.global().async {
                     let json = String(data: try! JSONEncoder().encode(self.XPC.state.currentData.prevSettings), encoding: .utf8)!
-                    self.XPC.initConnection(jsonSettings: json) { _ in }
+                    let jsonFiles = self.XPC.state.currentData.prevFilesJSON
+                    self.XPC.newInitConnection(jsonSettings: json, jsonFiles: jsonFiles) { _ in }
                 }
                 os_log("onDidWake attempt init", log: log, type: .default)
             }
@@ -109,6 +111,11 @@ public struct FileJSONData : Codable {
     var stunnelConf: String
     var stunnelPem: String
     var OVPNConf: String
+}
+
+let globlog = OSLog(subsystem: "com.Thrill32.Stunskin.Helper", category: "general")
+public func errlog(_ text: String) {
+    os_log("%{public}@ from Stunskin", log: globlog, type: .error, text)
 }
 
 class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
@@ -163,15 +170,18 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
     let listener: NSXPCListener
     let state = State.shared
     
-    var sleepMan: SleepManager!
+    var sleepMan: SleepManager?
+    private var vpn: OVPNManager?
 
     override init() {
         listener = NSXPCListener(machServiceName: "com.Thrill32.Stunskin.Helper")
         super.init()
-        sleepMan = SleepManager(XPC: self) // self is safe to use now
+        
+        // Fully initialized now, safe to use `self`
+        self.sleepMan = SleepManager(XPC: self)
         listener.delegate = self
     }
-    
+
     func start() {
         listener.resume()
         RunLoop.main.run()
@@ -423,77 +433,77 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
         resetConnectionState()
     }
     
-    func initConnection(jsonSettings:String, reply: @escaping (String) -> Void) {
-        os_log("initConnection start", log: log, type: .default)
-        resetConnectionState()
-        
-//        os_log("Stunskin path: %{public}@", log: log, type: .error, Bundle.main.bundleURL.path) //this worked and pointed to .../Content/Helpers/
-        do {
-            let curSettings = try decodeSettings(from: jsonSettings)
-            state.currentData.prevSettings = curSettings
-            
-            state.currentData.gatewayIP = try defaultGateway()
-            let interfaceIP = try interfaceAddress(primaryInterface)
-            
-            ignoreCommandFailure(
-                executable: "/sbin/route",
-                arguments: ["-n", "delete", "-host", curSettings.targetIP, state.currentData.gatewayIP]
-            )
-            ignoreCommandFailure(
-                executable: "/sbin/route",
-                arguments: ["-n", "delete", "-host", curSettings.targetIP, interfaceIP, "-ifscope", primaryInterface]
-            )
-            
-            try ensureSuccess(
-                runCommand(
-                    executable: "/sbin/route",
-                    arguments: ["-n", "add", "-host", curSettings.targetIP, state.currentData.gatewayIP, "-ifscope", primaryInterface]
-                ),
-                operation: "Adding route for \(curSettings.targetIP)"
-            )
-            
-            let services = try availableNetworkServices()
-            state.currentData.initDNSByService = snapshotDNS(for: services)
-            state.currentData.initWDNS = state.currentData.initDNSByService["Wi-Fi"] ?? []
-            state.currentData.initEDNS = state.currentData.initDNSByService["Ethernet"] ?? []
-            
-            for service in services {
-                try setDNS(curSettings.DNS, service: service)
-            }
-            
-            try runStunnel(curSettings.stunnelPath)
-            os_log("stunnel start: %{public}@", log: log, type: .default, curSettings.stunnelPath)
-            
-            Thread.sleep(forTimeInterval: 0.1) //TODO: replace thread.sleep
-            try runOVPN(curSettings.OVPNPath)
-            os_log("OVPN start: %{public}@", log: log, type: .default, curSettings.OVPNPath)
-            
-            Thread.sleep(forTimeInterval: 0.8)
-            
-            let stunnelRunning: Bool! = isProcessRunning("stunnel")
-            let openVPNRunning: Bool! = isProcessRunning("openvpn")
-            
-            os_log("OVPN: %{public}s | Stunnel: %{public}s", log: log, type: .error, String(openVPNRunning), String(stunnelRunning))
-            
-            guard stunnelRunning, openVPNRunning else {
-                throw HelperError.startupFailed(
-                    "VPN startup validation failed. stunnel running: \(stunnelRunning), openvpn running: \(openVPNRunning)"
-                )
-            }
-            
-            state.currentData.running = true
-            state.saveState()
-            reply("Success")
-            
-            let curFDA = hasFullDiskAccess() ? "Active" : "Inactive"
-            os_log("InitSaveSuccess, FDA: %{public}@", log: log, type: .default, curFDA)
-        } catch {
-            rollbackConnectionSetup()
-            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            os_log("initConnection failed: %{public}@", log: log, type: .error, message)
-            reply("Failure: \(message)")
-        }
-    }
+//    func initConnection(jsonSettings:String, reply: @escaping (String) -> Void) {
+//        os_log("initConnection start", log: log, type: .default)
+//        resetConnectionState()
+//        
+////        os_log("Stunskin path: %{public}@", log: log, type: .error, Bundle.main.bundleURL.path) //this worked and pointed to .../Content/Helpers/
+//        do {
+//            let curSettings = try decodeSettings(from: jsonSettings)
+//            state.currentData.prevSettings = curSettings
+//            
+//            state.currentData.gatewayIP = try defaultGateway()
+//            let interfaceIP = try interfaceAddress(primaryInterface)
+//            
+//            ignoreCommandFailure(
+//                executable: "/sbin/route",
+//                arguments: ["-n", "delete", "-host", curSettings.targetIP, state.currentData.gatewayIP]
+//            )
+//            ignoreCommandFailure(
+//                executable: "/sbin/route",
+//                arguments: ["-n", "delete", "-host", curSettings.targetIP, interfaceIP, "-ifscope", primaryInterface]
+//            )
+//            
+//            try ensureSuccess(
+//                runCommand(
+//                    executable: "/sbin/route",
+//                    arguments: ["-n", "add", "-host", curSettings.targetIP, state.currentData.gatewayIP, "-ifscope", primaryInterface]
+//                ),
+//                operation: "Adding route for \(curSettings.targetIP)"
+//            )
+//            
+//            let services = try availableNetworkServices()
+//            state.currentData.initDNSByService = snapshotDNS(for: services)
+//            state.currentData.initWDNS = state.currentData.initDNSByService["Wi-Fi"] ?? []
+//            state.currentData.initEDNS = state.currentData.initDNSByService["Ethernet"] ?? []
+//            
+//            for service in services {
+//                try setDNS(curSettings.DNS, service: service)
+//            }
+//            
+//            try runStunnel(curSettings.stunnelPath)
+//            os_log("stunnel start: %{public}@", log: log, type: .default, curSettings.stunnelPath)
+//            
+//            Thread.sleep(forTimeInterval: 0.1) //TODO: replace thread.sleep
+//            try runOVPN(curSettings.OVPNPath)
+//            os_log("OVPN start: %{public}@", log: log, type: .default, curSettings.OVPNPath)
+//            
+//            Thread.sleep(forTimeInterval: 0.8)
+//            
+//            let stunnelRunning: Bool! = isProcessRunning("stunnel")
+//            let openVPNRunning: Bool! = isProcessRunning("openvpn")
+//            
+//            os_log("OVPN: %{public}s | Stunnel: %{public}s", log: log, type: .error, String(openVPNRunning), String(stunnelRunning))
+//            
+//            guard stunnelRunning, openVPNRunning else {
+//                throw HelperError.startupFailed(
+//                    "VPN startup validation failed. stunnel running: \(stunnelRunning), openvpn running: \(openVPNRunning)"
+//                )
+//            }
+//            
+//            state.currentData.running = true
+//            state.saveState()
+//            reply("Success")
+//            
+//            let curFDA = hasFullDiskAccess() ? "Active" : "Inactive"
+//            os_log("InitSaveSuccess, FDA: %{public}@", log: log, type: .default, curFDA)
+//        } catch {
+//            rollbackConnectionSetup()
+//            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+//            os_log("initConnection failed: %{public}@", log: log, type: .error, message)
+//            reply("Failure: \(message)")
+//        }
+//    }
     
     private func decodeFiles(from jsonFiles: String) throws -> FileJSONData {
         guard let data = jsonFiles.data(using: .utf8) else {
@@ -527,8 +537,6 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
         }
     }
     
-    private var vpn: OVPNManager
-    
     func newInitConnection(jsonSettings: String, jsonFiles: String, reply: @escaping (String) -> Void) {
         
         os_log("initConnection start v2", log: log, type: .default)
@@ -538,6 +546,7 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
 
             let curSettings = try decodeSettings(from: jsonSettings)
             state.currentData.prevSettings = curSettings
+            state.currentData.prevFilesJSON = jsonFiles
             
             state.currentData.gatewayIP = try defaultGateway()
             let interfaceIP = try interfaceAddress(primaryInterface)
@@ -570,17 +579,23 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
             
             var Files: FileJSONData = try decodeFiles(from: jsonFiles)
             
+            errlog("trywrite ovpnconf")
+            
             try Files.OVPNConf.write(
                 to: URL(fileURLWithPath: "/Library/Application Support/Stunskin/tmp/curovpn.ovpn"),
                 atomically: true,
                 encoding: .utf8
             )
             
+            errlog("trywrite stunnelpem")
+            
             try Files.stunnelPem.write(
                 to: URL(fileURLWithPath: "/Library/Application Support/Stunskin/tmp/curpem.pem"),
                 atomically: true,
                 encoding: .utf8
             )
+            
+            errlog("trywrite stunnelconf")
             
             try Files.stunnelConf.write(
                 to: URL(fileURLWithPath: "/Library/Application Support/Stunskin/tmp/curstunconf.conf"),
@@ -594,44 +609,55 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
                 with: "CAfile = /Library/Application Support/Stunskin/tmp/curpem.pem",
                 options: .regularExpression
             )
-            
+            errlog("trywrite newstunnelconf (mod cert)")
             try newStunnelConf.write(to: URL(fileURLWithPath: "/Library/Application Support/Stunskin/tmp/curstunconf.conf"), atomically: true, encoding: .utf8)
-                
+            
+            errlog("tryrun stunnel")
             try runStunnel("/Library/Application Support/Stunskin/tmp/curstunconf.conf")
             os_log("stunnel start: %{public}@", log: log, type: .default, curSettings.stunnelPath)
             
 //            try runOVPN("/Library/Application Support/Stunskin/tmp/curovpn.ovpn")
+            errlog("trycreate vpn")
             vpn = OVPNManager()
 
-            vpn.onStateChange = { state in
+            vpn?.onStateChange = { [weak self] state in
+                guard let self else { return }
                 switch state {
-                case .connected:      // update UI, start power assertion
-                case .disconnected:   // update UI, release power assertion
-                case .connecting:     // show spinner
-                case .disconnecting:  // show spinner
-                case .failed(let e):  // show error
+                case .connecting:
+                    os_log("OVPN state: connecting", log: self.log, type: .default)
+                case .connected:
+                    os_log("OVPN state: connected", log: self.log, type: .default)
+                    self.state.currentData.running = true
+                    self.state.saveState()
+                case .disconnecting:
+                    os_log("OVPN state: disconnecting", log: self.log, type: .default)
+                case .disconnected:
+                    os_log("OVPN state: disconnected", log: self.log, type: .default)
+                    self.rollbackConnectionSetup()
+                case .failed(let error):
+                    os_log("OVPN state: failed %{public}@", log: self.log, type: .error, String(describing: error))
+                    self.rollbackConnectionSetup()
                 }
             }
-
-            vpn.onLog       = { log  in /* pipe to os_log or your logging system */ }
-            vpn.onByteCount = { i, o in /* update bandwidth display */ }
-
-            try vpn.start(configPath: "/Library/Application Support/Stunskin/tmp/curovpn.ovpn")
+            
+//            vpn.onLog       = { log  in }
+//            vpn.onByteCount = { i, o in }
+            errlog("attempt vpn start. time: " + String(Date.now.formatted()))
+            try vpn!.start(configPath: "/Library/Application Support/Stunskin/tmp/curovpn.ovpn")
             os_log("ovpn start: %{public}@", log: log, type: .default, "/Library/Application Support/Stunskin/tmp/curovpn.ovpn")
             
-            
-            let stunnelRunning: Bool! = isProcessRunning("stunnel")
-            let openVPNRunning: Bool! = isProcessRunning("openvpn")
-            
-            
-            guard stunnelRunning, openVPNRunning else {
-                throw HelperError.startupFailed(
-                    "VPN startup validation failed. stunnel running: \(stunnelRunning), openvpn running: \(openVPNRunning)"
-                )
-            }
-            
-            state.currentData.running = true
-            state.saveState()
+//            errlog("isprocrun")
+//            let stunnelRunning: Bool! = isProcessRunning("stunnel")
+//            let openVPNRunning: Bool! = isProcessRunning("openvpn")
+//            
+//            guard stunnelRunning, openVPNRunning else {
+//                throw HelperError.startupFailed(
+//                    "VPN startup validation failed. stunnel running: \(stunnelRunning), openvpn running: \(openVPNRunning)"
+//                )
+//            }
+//            errlog("attempt save")
+//            state.currentData.running = true
+//            state.saveState()
             
             reply("Success")
             
@@ -647,11 +673,12 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
     
     func endConnection(reply: @escaping (String) -> Void) {
         os_log("endConnection start", log: log, type: .default)
-        
+        errlog("endconnection starting. time: " + String(Date.now.formatted()))
         ignoreCommandFailure(executable: "/usr/bin/pkill", arguments: ["-x", "stunnel"])
 //        ignoreCommandFailure(executable: "/usr/bin/pkill", arguments: ["-x", "openvpn"])
-        do {
+        if let vpn = vpn {
             vpn.stop()
+            self.vpn = nil
         }
         
         if !state.currentData.prevSettings.targetIP.isEmpty, !state.currentData.gatewayIP.isEmpty {
@@ -672,6 +699,8 @@ class XPCListener: NSObject, NSXPCListenerDelegate, HelperProtocol {
         
         state.currentData.running = false
         state.saveState()
+        notify_post("com.stunskin.vpn.disconnected")
         reply("Success")
     }
 }
+

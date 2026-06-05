@@ -40,6 +40,9 @@ class OVPNManager {
         ovpnProcess?.terminate()
         ovpnProcess = nil
         cleanupPWFile()
+        // Proactively notify disconnection so the tray updates immediately
+        onStateChange?(.disconnected)
+        postDarwinNotification("com.stunskin.vpn.disconnected")
     }
     
     private func runOVPN(_ configPath: String, password: String) throws {
@@ -56,7 +59,7 @@ class OVPNManager {
             .appendingPathComponent("openvpn", isDirectory: false)
         process.arguments = [
             "--config", configPath,
-            "--management", "localhost", "7505", pwFile.path,
+            "--management", "127.0.0.1", "7505", pwFile.path,
             "--management-hold",
             "--management-query-passwords"
         ]
@@ -92,6 +95,10 @@ class OVPNManager {
         
         mgmt.onLog       = { [weak self] log in self?.onLog?(log) }
         mgmt.onByteCount = { [weak self] i, o in self?.onByteCount?(i, o) }
+        mgmt.onError = { [weak self] error in
+            self?.onStateChange?(.failed(error))
+            self?.postDarwinNotification("com.stunskin.vpn.failed")
+        }
         
         mgmt.onConnected = { [weak self] in
             mgmt.enableStateStreaming()
@@ -112,6 +119,7 @@ class OVPNManager {
         management = nil
         cleanupPWFile()
         onStateChange?(.disconnected)
+        postDarwinNotification("com.stunskin.vpn.disconnected")
     }
     
     private func cleanupPWFile() {
@@ -126,11 +134,14 @@ class OVPNManagement {
     var onConnected: (() -> Void)?
     var onDisconnected: (() -> Void)?
     var onByteCount: ((Int64, Int64) -> Void)?
+    var onError: ((Error) -> Void)?
     
     private var connection: NWConnection?
     private let port: NWEndpoint.Port = 7505
     private var buffer = ""
     private let password: String
+    private var didAnnounceConnected = false
+    private var didAuthenticate = false
     
     init(password: String) {
         self.password = password
@@ -143,11 +154,15 @@ class OVPNManagement {
             guard let self else { return }
             switch state {
             case .ready:
-                self.send("\(self.password)\n")
-                self.onConnected?()
+                // Start reading first; authenticate when prompted by the server.
                 self.receive()
+                // Do not call onConnected here; wait for management prompt/hold.
+            case .waiting(let error):
+                self.onLog?("Management socket waiting: \(error)")
+                self.onError?(error)
             case .failed(let error):
                 self.onLog?("Management socket failed: \(error)")
+                self.onError?(error)
             default:
                 break
             }
@@ -175,6 +190,16 @@ class OVPNManagement {
     }
     
     private func processBuffer() {
+        // Detect management password prompt even if not newline-terminated
+        if !didAuthenticate, buffer.contains("ENTER PASSWORD:") {
+            send("\(password)\n")
+            didAuthenticate = true
+            // Remove the prompt substring to avoid repeated triggering
+            if let range = buffer.range(of: "ENTER PASSWORD:") {
+                buffer.removeSubrange(range)
+            }
+        }
+        
         var lines = buffer.components(separatedBy: "\n")
         buffer = lines.removeLast()
         lines
@@ -184,26 +209,52 @@ class OVPNManagement {
     }
     
     private func handle(_ line: String) {
+        // Authenticate to management interface when prompted
+        if line.localizedCaseInsensitiveContains("ENTER PASSWORD:") {
+            send("\(password)\n")
+            didAuthenticate = true
+            return
+        }
+        
         if line.hasPrefix(">HOLD:") {
+            // Management is ready; notify and then release the hold
+            if !didAnnounceConnected {
+                onConnected?()
+                didAnnounceConnected = true
+            }
             send("hold release\n")
-            
-        } else if line.hasPrefix(">STATE:") {
+            return
+        }
+        
+        if line.hasPrefix(">STATE:") {
             let parts = line.dropFirst(7).components(separatedBy: ",")
             let state = parts.count > 1 ? String(parts[1]) : "UNKNOWN"
             onStateChange?(state)
             if state == "EXITING" { onDisconnected?() }
-            
-        } else if line.hasPrefix(">LOG:") {
+            return
+        }
+        
+        if line.hasPrefix(">LOG:") {
             let parts = line.dropFirst(5).components(separatedBy: ",")
             if parts.count > 2 { onLog?(parts[2...].joined(separator: ",")) }
-            
-        } else if line.hasPrefix(">BYTECOUNT:") {
+            return
+        }
+        
+        if line.hasPrefix(">BYTECOUNT:") {
             let parts = line.dropFirst(11).components(separatedBy: ",")
             if parts.count == 2,
                let bytesIn  = Int64(parts[0]),
                let bytesOut = Int64(parts[1]) {
                 onByteCount?(bytesIn, bytesOut)
             }
+            return
+        }
+        
+        if line.hasPrefix(">PASSWORD:") {
+            // OpenVPN is requesting user credentials (e.g., Auth or Private Key).
+            // This implementation does not supply them; log for visibility.
+            onLog?("OpenVPN requested credentials via management: \(line)")
+            return
         }
     }
     
@@ -212,3 +263,4 @@ class OVPNManagement {
         connection?.send(content: data, completion: .idempotent)
     }
 }
+

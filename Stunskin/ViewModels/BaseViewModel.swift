@@ -5,7 +5,7 @@ import ServiceManagement
 
 import os.log
 let log = OSLog(subsystem: "com.Thrill32.Stunskin", category: "general")
-
+//TODO: check stunnel conf assignment in fileviewmodel stuninstall setup
 public struct Settings : Codable {
     var targetIP: String
     var DNS: [String]

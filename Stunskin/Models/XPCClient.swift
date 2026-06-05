@@ -46,7 +46,7 @@ class XPCClient {
         }) as? HelperProtocol else { return }
         
         print("InitCon on app!")
-        helper.initConnection(jsonSettings: jsonSettings, reply: reply)
+//        helper.initConnection(jsonSettings: jsonSettings, reply: reply)
     }
     
     func newInitVPNConnection(jsonSettings: String, jsonFiles: String, reply: @escaping (String) -> Void) {

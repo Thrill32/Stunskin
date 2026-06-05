@@ -9,12 +9,14 @@ class VPNStateObserver {
     var onConnected: (() -> Void)?
     var onDisconnected: (() -> Void)?
     var onConnecting: (() -> Void)?
+    var onFailed: (() -> Void)?
     
     func startListening() {
         observe("com.stunskin.vpn.connected")    { [weak self] in self?.onConnected?() }
         observe("com.stunskin.vpn.disconnected") { [weak self] in self?.onDisconnected?() }
         observe("com.stunskin.vpn.connecting")   { [weak self] in self?.onConnecting?() }
         observe("com.stunskin.vpn.disconnecting"){ }
+        observe("com.stunskin.vpn.failed")    { [weak self] in self?.onFailed?() }
     }
     
     func stopListening() {
@@ -66,6 +68,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return "Disable VPN"
         case 1:
             return "Connecting..."
+        case -1:
+            return "Connection Failed"
         default:
             return "Unknown Status"
         }
@@ -94,7 +98,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
         
+        observer.onFailed = { [weak self] in
+            DispatchQueue.main.async {
+                self?.VPNStatus = -1
+                self?.updateStatusUI()
+            }
+        }
+        
         observer.startListening()
+        
+        dm.manager.client.connect()
+        dm.manager.client.isRunning { [weak self] running in
+            DispatchQueue.main.async {
+                self?.VPNStatus = running ? 2 : 0
+                self?.updateStatusUI()
+            }
+        }
         
         setupStatusItem()
 //        refreshVPNState()
@@ -201,6 +220,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             imageName = lockClosedSymbol
         case 1:
             imageName = pendingSymbol
+        case -1:
+            imageName = "lock.open.trianglebadge.exclamationmark.fill"
         default:
             imageName = lockOpenSymbol
         }
@@ -267,8 +288,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func toggleVPN() {
         if VPNStatus == 2 {
             dm.endConnection()
-        } else if VPNStatus == 0 {
-            dm.initConnection()
+        } else {
+            // Use the new init path that sends configs via XPC and start showing Connecting immediately
+            dm.newInitConnection()
+            VPNStatus = 1
         }
         
         updateStatusUI()
@@ -278,3 +301,4 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.orderFrontStandardAboutPanel(nil)
     }
 }
+
