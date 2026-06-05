@@ -8,6 +8,8 @@ import notify
 
 //TODO: Convert binaries to json and send through XPC. Can store in /Library/Application Support if necessary. FDA is a file permissions issue, not an OpenVPN one.
 
+//TODO: Check how pem file is handled.. it's not always in the same location of the other things, so must be careful.
+
 class SleepManager {
     
     let log = OSLog(subsystem: "com.Thrill32.Stunskin.Helper", category: "general")
